@@ -1,0 +1,37 @@
+name: update-formula
+
+# Bumps Formula/snisplit.rb to the latest snisplit release. Runs every 3 hours
+# and can be started by hand (Actions tab, or: gh workflow run update-formula).
+on:
+  schedule:
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump snisplit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          f=Formula/snisplit.rb
+          tag=$(gh api repos/nguyenthanh1205tb/snisplit/releases/latest --jq .tag_name)
+          if grep -q "refs/tags/$tag.tar.gz" "$f"; then
+            echo "already at $tag"; exit 0
+          fi
+          curl -fsSL -o src.tar.gz "https://github.com/nguyenthanh1205tb/snisplit/archive/refs/tags/$tag.tar.gz"
+          tar -tzf src.tar.gz >/dev/null
+          sha=$(sha256sum src.tar.gz | cut -d' ' -f1)
+          rm src.tar.gz
+          sed -i -E "s|refs/tags/[^\"]+\.tar\.gz|refs/tags/$tag.tar.gz|; s|sha256 \"[0-9a-f]*\"|sha256 \"$sha\"|" "$f"
+          git diff
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "snisplit $tag"
+          git push
