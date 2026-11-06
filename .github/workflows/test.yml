@@ -1,0 +1,50 @@
+name: test-formula
+
+# Installs the formula from source on macOS and Linux and exercises it.
+# Also called by update-formula right after it bumps the version.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  brew:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.sha || 'main' }}
+      - uses: Homebrew/actions/setup-homebrew@main
+      - name: Install from source
+        run: brew install --build-from-source nguyenthanh1205tb/tap/snisplit
+      - name: brew test
+        run: brew test nguyenthanh1205tb/tap/snisplit
+      - name: brew audit
+        run: brew audit --strict --formula nguyenthanh1205tb/tap/snisplit
+      - name: Smoke test (HTTP proxy mode, no root needed)
+        run: |
+          set -euo pipefail
+          snisplit version
+          snisplit hosts show --file /dev/null | head -3
+          snisplit run --transparent=false > proxy.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:8881/snisplit/status && break; sleep 1; done
+          curl -sf -o /dev/null -w "CONNECT example.com -> %{http_code}\n" -x http://127.0.0.1:8881 https://example.com/
+          snisplit status
+          snisplit stop
+          cat proxy.log
+      - name: brew services (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew services start nguyenthanh1205tb/tap/snisplit
+          for i in $(seq 1 20); do snisplit status | grep -q '^running' && break; sleep 1; done
+          snisplit status
+          brew services stop nguyenthanh1205tb/tap/snisplit

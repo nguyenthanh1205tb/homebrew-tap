@@ -35,3 +35,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "snisplit $tag"
           git push
+
+  # pushes made with GITHUB_TOKEN do not trigger other workflows, so test here
+  test:
+    needs: update
+    uses: ./.github/workflows/test.yml
