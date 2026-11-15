@@ -1,8 +1,8 @@
 class Snisplit < Formula
   desc "Bypass SNI-based DPI blocking by splitting the TLS ClientHello"
   homepage "https://github.com/nguyenthanh1205tb/snisplit"
-  url "https://github.com/nguyenthanh1205tb/snisplit/archive/refs/tags/v0.7.0.tar.gz"
-  sha256 "681afda30cd28937c57733dc1ae77891e51202931f4968012c643aa46a386f14"
+  url "https://github.com/nguyenthanh1205tb/snisplit/archive/refs/tags/v0.7.1.tar.gz"
+  sha256 "6c7d1f34e425f1ef6ba1e6c3075e5fd6cbf74e638819e83c463e6f89e3f2a49c"
   license "MIT"
   head "https://github.com/nguyenthanh1205tb/snisplit.git", branch: "main"
 
